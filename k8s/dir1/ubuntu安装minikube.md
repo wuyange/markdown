@@ -95,6 +95,12 @@ minikube kubectl -- get pods -A
 
 ```shell
 minikube dashboard
+
+# 外部访问控制台
+kubectl proxy --port=8001 --address='10.182.79.37' --accept-hosts='^.*' &
+# --port=[需要暴露的端口号] 
+# --address='[服务器IP]' 
+# --accept-hosts='^[外部访问服务器的IP]
 ```
 
 5. 此时的`minikube kubectl --`就相当于k8s里的`kubectl`命令，我们可以通过起别名的方式让其一致
