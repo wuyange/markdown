@@ -2,6 +2,8 @@
 
 参考链接： https://zhuanlan.zhihu.com/p/429690423
 
+minikube命令链接：https://www.zhaowenyu.com/minikube-doc/cmd/minikube-node-add.html
+
 ## 安装docker
 
 1. 如果之前有安装过`docker`，可以先卸载：
@@ -110,5 +112,23 @@ kubectl proxy --port=8001 --address='10.182.79.37' --accept-hosts='^.*' &
 vi ~/.bashrc
 # 在文件的底部加上一下命令
 alias kubectl='minikube kubectl --'
+# 然后通过source使其生效
+source ~/.bashrc
+```
+
+6. `minikube`增加节点
+
+```shell
+# 查看当前的 node 列表
+root@host3:~/shunyu# minikube node list
+minikube        192.168.49.2
+
+# 添加节点
+minikube node add
+
+root@host3:~/shunyu# minikube node list
+minikube        192.168.49.2
+minikube-m02    192.168.49.3
+minikube-m03    192.168.49.4
 ```
 
