@@ -92,7 +92,7 @@ KUBE-SVC-RL3JAE4GN7VOGDGP规则如下
 
 在Cluster中，除了可以通过Cluster IP访问Service，Kubernetes还提供了更为方便的DNS访问。
 
-kubeadm部署时会默认安装kube-dns组件
+kubeadm部署时会默认安装kube-dns组件**（但是我们使用的是coredns）**
 
 ```shell
 root@host3:~# kubectl get deployment  --namespace=kube-system
@@ -100,4 +100,40 @@ NAME                   READY   UP-TO-DATE   AVAILABLE   AGE
 coredns                1/1     1            1           51d
 kubernetes-dashboard   0/1     1            0           35d
 ```
+
+## 外网如何访问Service
+
+除了Cluster内部可以访问Service，很多情况下我们也希望应用的Service能够暴露给Cluster外部。Kubernetes提供了多种类型的Service，默认是ClusterIP。
+
+ClusterIPService通过Cluster内部的IP对外提供服务，只有Cluster内的节点和Pod可访问，这是默认的Service类型，前面实验中的Service都是ClusterIP。
+
+NodePortService通过Cluster节点的静态端口对外提供服务。Cluster外部可以通过<NodeIP>:<NodePort>访问Service。
+
+LoadBalancerService利用cloud provider特有的load balancer对外提供服务，cloud provider负责将load balancer的流量导向Service。目前支持的cloud provider有GCP、AWS、Azur等。
+
+### NodePort
+
+添加type: NodePort，重新创建httpd-svc
+
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: http-svc
+spec:
+  type: NodePort
+  selector:
+    run: httpd
+  ports:
+  - protocol: TCP
+    port: 8080
+    targetPort: 80
+```
+
+![image-20221028130213040](5-通过Service访问Pod.assets/image-20221028130213040.png)
+
+Kubernetes依然会为httpd-svc分配一个ClusterIP，不同的是：
+
+- EXTERNAL-IP为nodes(我是none)，表示可通过Cluster每个节点自身的IP访问Service。
+- PORT(S)为8080:32312。8080是ClusterIP监听的端口，32312则是节点上监听的端口。Kubernetes会从30000～32767中分配一个可用的端口，每个节点都会监听此端口并将请求转发给Service（使用netstat也没有）
 
