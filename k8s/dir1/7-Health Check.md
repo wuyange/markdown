@@ -216,3 +216,173 @@ readinessProbe部分使用了不同于exec的另一种探测方法httpGet,Kubern
 
 ## Health Check在滚动更新中的应用
 
+Health Check另一个重要的应用场景是滚动更新，如果在滚动更新时，没有配置Health Check，新副本出现了异常，但是没有退出，默认的Health Check机制会认为容器已经就绪，进而会逐步用新副本替换现有副本，其结果就是：当所有旧副本都被替换后，整个应用将无法处理请求，无法对外提供服务。
+
+### 例子
+
+```yaml
+# test.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app
+spec:
+  replicas: 10
+  selector:
+    matchLabels:
+      app: app
+  template:
+    metadata:
+      labels:
+        app: app
+    spec:
+      containers:
+      - name: app
+        image: busybox
+        args:
+        - /bin/sh
+        - -c
+        - slepp 10; touch /tmp/healthy; sleep 30000
+        readinessProbe:
+          httpGet:
+            command:
+            - cat
+            - /tmp/healthy
+          initialDelaySeconds: 30
+          periodSeconds: 5
+```
+
+30s后查看pod
+
+```shell
+root@host3:~# kubectl get pod
+NAME                            READY   STATUS      RESTARTS   AGE
+app-778d44b69f-66fpm            1/1     Running     0          66s
+app-778d44b69f-6hz2l            1/1     Running     0          66s
+app-778d44b69f-7dvxx            1/1     Running     0          66s
+app-778d44b69f-9mhv7            1/1     Running     0          66s
+app-778d44b69f-cgbcv            1/1     Running     0          66s
+app-778d44b69f-fshbc            1/1     Running     0          66s
+app-778d44b69f-gr8ct            1/1     Running     0          66s
+app-778d44b69f-v9z8q            1/1     Running     0          66s
+app-778d44b69f-xlgbs            1/1     Running     0          66s
+app-778d44b69f-zk22v            1/1     Running     0          66s
+node-exporter-daemonset-dck97   1/1     Running     0          13d
+node-exporter-daemonset-ndthb   1/1     Running     0          13d
+node-exporter-daemonset-qgr5g   1/1     Running     0          13d
+readiness                       0/1     Completed   0          24h
+```
+
+接下来滚动更新应用，修改配置文件
+
+```yaml
+# test.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app
+spec:
+  replicas: 10
+  selector:
+    matchLabels:
+      app: app
+  template:
+    metadata:
+      labels:
+        app: app
+    spec:
+      containers:
+      - name: app
+        image: busybox
+        args:
+        - /bin/sh
+        - -c
+        - sleep 30000
+        readinessProbe:
+          httpGet:
+            command:
+            - cat
+            - /tmp/healthy
+          initialDelaySeconds: 30
+          periodSeconds: 5
+```
+
+由于新副本中不存在/tmp/healthy，因此是无法通过Readiness探测的,从Pod的AGE栏可判断，前面5个Pod是新副本，目前处于NOT READY状态, 旧副本中有两个pod被中止，后续被删除
+
+```shell
+root@host3:~# kubectl apply -f test.yaml --record
+Flag --record has been deprecated, --record will be removed in the future
+deployment.apps/app configured
+root@host3:~# kubectl get pod
+NAME                            READY   STATUS              RESTARTS   AGE
+app-68fff6b7b5-9hmz2            0/1     Running             0          8s
+app-68fff6b7b5-tszl2            0/1     Running             0          8s
+app-68fff6b7b5-zff59            0/1     Running             0          8s
+app-68fff6b7b5-zstp8            0/1     Running             0          8s
+app-68fff6b7b5-zxnvv            0/1     ContainerCreating   0          8s
+app-778d44b69f-66fpm            1/1     Running             0          118s
+app-778d44b69f-6hz2l            1/1     Running             0          118s
+app-778d44b69f-7dvxx            1/1     Running             0          118s
+app-778d44b69f-9mhv7            1/1     Running             0          118s
+app-778d44b69f-cgbcv            1/1     Running             0          118s
+app-778d44b69f-fshbc            1/1     Running             0          118s
+app-778d44b69f-gr8ct            1/1     Terminating         0          118s
+app-778d44b69f-v9z8q            1/1     Running             0          118s
+app-778d44b69f-xlgbs            1/1     Terminating         0          118s
+app-778d44b69f-zk22v            1/1     Running             0          118s
+node-exporter-daemonset-dck97   1/1     Running             0          13d
+node-exporter-daemonset-ndthb   1/1     Running             0          13d
+node-exporter-daemonset-qgr5g   1/1     Running             0          13d
+readiness                       0/1     Completed           0          24h
+```
+
+通过kubectl get deployment app查看deployment信息，期望的状态是10个READY的副本，但是只有8个准备好了，UP-TO-DATE 5表示当前已经完成更新的副本数，在我们的设定中，新副本始终都无法通过Readiness探测，所以这个状态会一直保持下去。
+
+```shell
+root@host3:~# kubectl get deployment app
+NAME   READY   UP-TO-DATE   AVAILABLE   AGE
+app    8/10    5            8           8m18s
+```
+
+![image-20221110184435014](7-Health Check.assets/image-20221110184435014.png)
+
+**滚动更新通过参数maxSurge和maxUnavailable来控制副本替换的数量**
+
+1. maxSurge此参数控制滚动更新过程中副本总数超过DESIRED的上限。maxSurge可以是具体的整数，也可以是百分百，向上取整。maxSurge默认值为25%。在上面的例子中，DESIRED为10，那么副本总数的最大值为roundUp(10+10*25%)=13，所以我们看到CURRENT就是13。
+
+2. maxUnavailable此参数控制滚动更新过程中，不可用的副本相占DESIRED的最大比例。maxUnavailable可以是具体的整数，也可以是百分百，向下取整。maxUnavailable默认值为25%。
+3. maxSurge值越大，初始创建的新副本数量就越多；maxUnavailable值越大，初始销毁的旧副本数量就越多。
+
+如果滚动更新失败，可以通过kubectl rollout undo回滚到上一个版本
+
+```shell
+root@host3:~# kubectl rollout history deployment app
+deployment.apps/app
+REVISION  CHANGE-CAUSE
+1         kubectl apply --cluster=minikube --filename=test.yaml --record=true
+2         kubectl apply --cluster=minikube --filename=test.yaml --record=true
+
+root@host3:~# kubectl rollout undo deployment app --to-revision=1
+deployment.apps/app rolled back
+root@host3:~# kubectl get pod
+root@host3:~# kubectl get deployment
+NAME   READY   UP-TO-DATE   AVAILABLE   AGE
+app    10/10   10           10          17m
+root@host3:~# kubectl get pod
+NAME                            READY   STATUS      RESTARTS   AGE
+app-778d44b69f-66fpm            1/1     Running     0          17m
+app-778d44b69f-6hz2l            1/1     Running     0          17m
+app-778d44b69f-7dvxx            1/1     Running     0          17m
+app-778d44b69f-9mhv7            1/1     Running     0          17m
+app-778d44b69f-cgbcv            1/1     Running     0          17m
+app-778d44b69f-fshbc            1/1     Running     0          17m
+app-778d44b69f-j75w5            1/1     Running     0          66s
+app-778d44b69f-v9z8q            1/1     Running     0          17m
+app-778d44b69f-zj44c            1/1     Running     0          66s
+app-778d44b69f-zk22v            1/1     Running     0          17m
+node-exporter-daemonset-dck97   1/1     Running     0          13d
+node-exporter-daemonset-ndthb   1/1     Running     0          13d
+node-exporter-daemonset-qgr5g   1/1     Running     0          13d
+readiness                       0/1     Completed   0          24h
+```
+
