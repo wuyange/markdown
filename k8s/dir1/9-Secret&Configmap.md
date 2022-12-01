@@ -281,3 +281,155 @@ root
 ## ConfigMap
 
 Secret可以为Pod提供密码、Token、私钥等敏感数据；对于一些非敏感数据，比如应用的配置信息，则可以用ConfigMap
+
+ConfigMap的创建和使用方式与Secret非常类似，主要的不同是数据以明文的形式存放。
+
+### 通过--from-literal创建ConfigMap
+
+每个--from-literal对应一个信息条目
+
+```
+kubectl create configmap my-configmap --from-literal=username=root --from-literal=passwd=hillstone
+```
+
+```shell
+root@host3:~# kubectl get cm
+NAME               DATA   AGE
+kube-root-ca.crt   1      86d
+my-configmap       2      4s
+```
+
+### 通过--from-file创建ConfigMap
+
+每个文件内容对应一个信息条目
+
+```shell
+root@host3:~# echo "root" > username.txt
+root@host3:~# echo "hillstone" > passwd.txt
+root@host3:~# kubectl create configmap my-configmap-1 --from-file=username.txt --from-file=passwd.txt
+configmap/my-configmap-1 created
+root@host3:~# kubectl get cm
+NAME               DATA   AGE
+kube-root-ca.crt   1      86d
+my-configmap       2      108s
+my-configmap-1     2      15s
+```
+
+### 通过--from-env-file创建Secret
+
+文件env.txt中每行Key=Value对应一个信息条目
+
+```shell
+root@host3:~# cat << EOF >> env.txt
+> username=root
+> passwd=hillstone
+> EOF
+root@host3:~# kubectl create configmap my-configmap-2 --from-env-file=env.txt
+configmap/my-configmap-2 created
+root@host3:~# kubectl get cm
+NAME               DATA   AGE
+kube-root-ca.crt   1      86d
+my-configmap       2      3m18s
+my-configmap-1     2      105s
+my-configmap-2     2      4s
+```
+
+### YAML配置文件创建Secret
+
+```shell
+# test.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: my-configmap-3
+data:
+  username: root
+  passwd: hillstone
+```
+
+### 查看configMap中的内容
+
+```shell
+configmap/my-configmap-3 created
+root@host3:~# kubectl describe cm my-configmap-3
+Name:         my-configmap-3
+Namespace:    default
+Labels:       <none>
+Annotations:  <none>
+
+Data
+====
+passwd:
+----
+hillstone
+username:
+----
+root
+
+BinaryData
+====
+
+Events:  <none>
+```
+
+## 在Pod中使用ConfigMap
+
+Pod可以通过Volume或者环境变量的方式使用ConfigMap
+
+### Volume方式
+
+优点：以Volume方式使用的ConfigMap支持动态更新：ConfigMap更新后，容器中的数据也会更新
+
+```yaml
+# test.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: my-pod
+spec:
+  containers:
+  - name: my-pod
+    image: busybox
+    args:
+    - /bin/sh
+    - -c
+    - sleep 30000;
+    volumeMounts:
+    - name: foo
+      mountPath: "/etc/foo"
+      readOnly: true
+  volumes:
+  - name: foo
+    configMap:
+      name: my-configmap
+```
+
+### 环境变量方式
+
+```yaml
+# test.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: my-pod
+spec:
+  containers:
+  - name: my-pod
+    image: busybox
+    args:
+    - /bin/sh
+    - -c
+    - sleep 30000;
+    env:
+    - name: USERNAME
+      valueFrom:
+        configMapKeyRef:
+          name: my-configmap
+          key: username
+    - name: PASSWD
+      valueFrom:
+        configMapKeyRef:
+          name: my-configmap
+          key: passwd
+```
+
