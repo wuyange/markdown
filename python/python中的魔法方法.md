@@ -100,9 +100,11 @@ class Solution:
 
 ### \__getattr__(self, name)
 
-通过「.」设置属性或 `setattr(key, value)` 设置属性时调用
+
 
 ### \__setattr__(self, name, value)
+
+通过「.」设置属性或 `setattr(key, value)` 设置属性时调用
 
 ### \__delattr__(self, name)
 
