@@ -14,7 +14,7 @@ pip install --pre scapy[basic]
 
 ## 使用Scapy抓包
 
-`sniff` 用于在网络上捕获数据包并对其进行分析,可以通过 `sniff` 函数来指定要捕获的数据包的数量、协议、过滤条件等。以下是`sniff()`函数的详细用法：
+`sniff` 是`scapy`中的一个函数，用于在网络上捕获数据包并对其进行分析,可以通过 `sniff` 函数来指定要捕获的数据包的数量、协议、过滤条件等。以下是`sniff()`函数的详细用法：
 
 ```python
 sniff(filter=None,iface=None,count=0,prn=None,offline=None,stop_filter=None,timeout=None,)
@@ -22,13 +22,9 @@ sniff(filter=None,iface=None,count=0,prn=None,offline=None,stop_filter=None,time
 
 参数说明：
 
-- `iface`：数据类型为 `str` 或者 `list`，抓包的接口或者接口列表，`'eth0' or ['eth0','eth1','eth2']`
+- `iface`：数据类型为 `str` 或者 `list`，默认为`None`，默认抓取所有接口的列表。抓包的接口或者接口列表，`'eth0' or ['eth0','eth1','eth2']`
 
 - `count`: 数据类型为`int`，用于指定要捕获的数据包数量，0表示无限制。
-- `offline`: 数据类型为`str` 或者  `list` 读取 `pcap` 文件或者是文件列表，`'/root/xxx.pcap' or ['/root/xxx.pcap','/root/xxx2.pcap']`
-
-- `prn`: 传入一个任意类型的返回值的回调函数，即作为参数传入并调用的函数，一般是`lambda`函数。当且仅当`prn`的返回值为`None`时，`sniff`不会打印它，其余情况`sniff`都会把它打印到显示器上。
-
 - `timeout`: 数据类型为`int` 或者 `float` 用于指定捕获数据包的超时时间，单位为秒
 - `filter`: 数据类型为`str`，用于过滤数据包的`BPF`过滤器表达式
 
@@ -41,8 +37,10 @@ tcp portrange 1-25：TCP端口范围1-25的报文
 not broadcast：排除广播报文
 ```
 
-- `stop_filter`：定义一个函数，在抓到指定数据包后停止抓包
-- `return`：以PacketList的形式返回抓到的包
+- `prn`: 数据类型为`function`，默认值为`None`。传入一个任意类型的返回值的回调函数，即作为参数传入并调用的函数，一般是`lambda`函数。当且仅当`prn`的返回值为`None`时，`sniff`不会打印它，其余情况`sniff`都会把它打印到显示器上。
+- `stop_filter`：数据类型为`function`，默认值为`None`。传入一个返回值为`bool`的函数，一般为`lambda`函数。会将每一个抓获的包放入这个函数，当返回值为`True`时，停止抓包。
+- `offline`: 数据类型为`str` 或者  `list` 读取 `pcap` 文件或者是文件列表，`'/root/xxx.pcap' or ['/root/xxx.pcap','/root/xxx2.pcap']`
+- `return`：以`PacketList`的形式返回抓到的包
 
 ```python
 # 例子
@@ -64,6 +62,7 @@ Ether / IP / ICMP 10.231.3.218 > 10.231.3.236 dest-unreach port-unreachable / IP
 Ether / IP / ICMP 10.231.3.236 > 10.182.79.36 echo-request 0 / Raw
 Ether / IP / ICMP 10.182.79.36 > 10.231.3.236 echo-reply 0 / Raw
 <Sniffed: TCP:0 UDP:0 ICMP:8 Other:0>
+# wrpcap将数据包导出为.pcap文件
 >>>wrpcap(r'C:\Users\shunyu\Desktop\1234.pcap',pkts)
 
 # 从桌面导入报文
@@ -78,9 +77,14 @@ Ether / IP / ICMP 10.182.79.37 > 10.231.3.236 echo-reply 0 / Raw
 Ether / IP / ICMP 10.231.3.236 > 10.182.79.36 echo-request 0 / Raw
 Ether / IP / ICMP 10.182.79.36 > 10.231.3.236 echo-reply 0 / Raw
 <Sniffed: TCP:0 UDP:0 ICMP:6 Other:0>
-                    
+```
+
+`AsyncSniffer`是`scapy`中的一个类，用于异步地捕获和处理网络数据包，参数基本和`sniff`一致
+
+```python
 # 使用AsyncSniffer异步抓包期间输入hello world
 >>> t = AsyncSniffer(filter='icmp and src host 10.182.79.36',prn=lambda x:x.summary())
+# t.start() 开始抓包
 >>> t.start()
 Ether / IP / ICMP 10.182.79.36 > 10.231.3.236 echo-reply 0 / Raw
 Ether / IP / ICMP 10.182.79.36 > 10.231.3.236 echo-reply 0 / Raw
@@ -90,11 +94,12 @@ hello world
 Ether / IP / ICMP 10.182.79.36 > 10.231.3.236 echo-reply 0 / Raw
 Ether / IP / ICMP 10.182.79.36 > 10.231.3.236 echo-reply 0 / Raw
 Ether / IP / ICMP 10.182.79.36 > 10.231.3.236 echo-reply 0 / Raw
+# t.stop() 停止抓包
 >>> t.stop()
 <Sniffed: TCP:0 UDP:0 ICMP:6 Other:0>
+# t.results 获取抓的数据包
+>>> pkt = t.results
 ```
-
-
 
 ## 导入和导出
 
@@ -113,10 +118,120 @@ pkts = sniff(offline=r'fileName.pcap')
 wrpcap("/root/fileName.pcap",pkts)
 ```
 
-### 常用函数
+## 解析数据包
+
+**准备数据**：解析数据包之前先要获取数据包，可以使用`rdpcap`导入`.pcap`数据包 或者使用 `sniff`抓取数据包
 
 ```python
-# ls() 查看支持的协议
+pkts = wrpcap("/root/fileName.pcap",pkts)
+```
+
+`pkt.summary()`列出包的摘要信息pkt可以是单个包，也可以是多个包组成的`PacketList`
+
+```python
+# 使用summary列出一组包的摘要信息
+>>> pkts.summary()
+Ether / IP / TCP 222.92.61.107:4499 > 192.168.10.6:53213 PA / Raw
+Ether / IP / TCP 192.168.10.6:53213 > 222.92.61.107:4499 A
+Ether / IP / TCP 192.168.10.6:53213 > 222.92.61.107:4499 PA / Raw
+Ether / IP / TCP 222.92.61.107:4499 > 192.168.10.6:53213 PA / Raw
+Ether / IP / TCP 222.92.61.107:4499 > 192.168.10.6:53213 PA / Raw
+# 使用summary列出一个包的摘要信息
+>>> pkts[0].summary()
+Ether / IP / TCP 222.92.61.107:4499 > 192.168.10.6:53213 PA / Raw
+```
+
+`pkt.show()`以人类可读的方式打印出数据包的各个字段和对应的值，可以是单个包，也可以是多个包组成的`PacketList`。如果展示的是多个包组成的`PacketList`，只会输出每个数据包的基本信息，如源地址、目的地址、协议类型、长度等
+
+```python
+# 单个包
+>>> pkts[0].show()
+###[ Ethernet ]###
+  dst       = b0:35:9f:26:d6:6c
+  src       = 14:51:7e:58:67:c9
+  type      = IPv4
+###[ IP ]###
+     version   = 4
+     ihl       = 5
+     tos       = 0x0
+     len       = 224
+     id        = 42053
+     flags     =
+     frag      = 0
+     ttl       = 122
+     proto     = tcp
+     chksum    = 0xb55c
+     src       = 222.92.61.107
+     dst       = 192.168.10.6
+     \options   \
+###[ TCP ]###
+        sport     = 4499
+        dport     = 53213
+        seq       = 2506396920
+        ack       = 1338204138
+        dataofs   = 5
+        reserved  = 0
+        flags     = PA
+        window    = 65340
+        chksum    = 0xe0f9
+        urgptr    = 0
+        options   = []
+###[ Raw ]###
+           load      = '|r\x00\\xb4U\x00\x00,\x00\x00\\xfeH\\x88xdf߸\\xf6'
+
+# 多个包
+>>> pkts.show()
+0000 Ether / IP / TCP 222.92.61.107:4499 > 192.168.10.6:53213 PA / Raw
+0001 Ether / IP / TCP 192.168.10.6:53213 > 222.92.61.107:4499 A
+0002 Ether / IP / TCP 192.168.10.6:53213 > 222.92.61.107:4499 PA / Raw
+0003 Ether / IP / TCP 222.92.61.107:4499 > 192.168.10.6:53213 PA / Raw
+0004 Ether / IP / TCP 222.92.61.107:4499 > 192.168.10.6:53213 PA / Raw
+```
+
+`ls(pkt)`查看数据包各个字段的含义
+
+```python
+>>> ls(pkts[0])
+dst        : DestMACField                        = 'b0:35:9f:26:d6:6c' ('None')
+src        : SourceMACField                      = '14:51:7e:58:67:c9' ('None')
+type       : XShortEnumField                     = 2048            ('36864')
+--
+version    : BitField  (4 bits)                  = 4               ('4')
+ihl        : BitField  (4 bits)                  = 5               ('None')
+tos        : XByteField                          = 0               ('0')
+len        : ShortField                          = 224             ('None')
+id         : ShortField                          = 42053           ('1')
+flags      : FlagsField                          = <Flag 0 ()>     ('<Flag 0 ()>')
+frag       : BitField  (13 bits)                 = 0               ('0')
+ttl        : ByteField                           = 122             ('64')
+proto      : ByteEnumField                       = 6               ('0')
+chksum     : XShortField                         = 46428           ('None')
+src        : SourceIPField                       = '222.92.61.107' ('None')
+dst        : DestIPField                         = '192.168.10.6'  ('None')
+options    : PacketListField                     = []              ('[]')
+--
+sport      : ShortEnumField                      = 4499            ('20')
+dport      : ShortEnumField                      = 53213           ('80')
+seq        : IntField                            = 2506396920      ('0')
+ack        : IntField                            = 1338204138      ('0')
+dataofs    : BitField  (4 bits)                  = 5               ('None')
+reserved   : BitField  (3 bits)                  = 0               ('0')
+flags      : FlagsField                          = <Flag 24 (PA)>  ('<Flag 2 (S)>')
+window     : ShortField                          = 65340           ('8192')
+chksum     : XShortField                         = 57593           ('None')
+urgptr     : ShortField                          = 0               ('0')
+options    : TCPOptionsField                     = []              ("b''")
+--
+load       : StrField                            = b'|r\x00\xb4U\x00\x00,\x00\x00\xfeH\x88\xdf\xb8\xf6' ("b''")
+```
+
+## 构造数据包
+
+### 前置知识
+
+`ls()` 是 `scapy` 中用来列出支持的协议和字段的函数。它可以用来查看所有已经定义的协议和协议的字段，以及这些字段所包含的值的格式。
+
+```python
 # ls(SNMP)查看某个协议默认参数
 >>> ls()
 AH         : AH
@@ -132,83 +247,6 @@ ATT_Exchange_MTU_Response : Exchange MTU Response
 ATT_Execute_Write_Request : Execute Write Request
 ATT_Execute_Write_Response : Execute Write Response
 ....
->>> ls(SNMP)
-version    : ASN1F_enum_INTEGER                  = ('0x1 <ASN1_INTEGER[1]>')
-community  : ASN1F_STRING                        = ("<ASN1_STRING['public']>")
-PDU        : ASN1F_CHOICE                        = ('\x1b[0m<\x1b[0m\x1b[31m\x1b[1mSNMPget\x1b[0m  \x1b[0m|\x1b[0m\x1b[0m>\x1b[0m')
-    
-# lsc() 列出scapy通用的操作方法
->>> lsc()
-IPID_count          : Identify IP id values classes in a list of packets
-arpcachepoison      : Poison target's cache with (your MAC,victim's IP) couple
-arping              : Send ARP who-has requests to determine which hosts are up
-arpleak             : Exploit ARP leak flaws, like NetBSD-SA2017-002.
-bind_layers         : Bind 2 layers on some specific fields' values.
-bridge_and_sniff    : Forward traffic between interfaces if1 and if2, sniff and return
-chexdump            : Build a per byte hexadecimal representation
-computeNIGroupAddr  : Compute the NI group Address. Can take a FQDN as input parameter
-....
-                                        
-# pkt.summary()列出包的摘要 pkt可以是单个包，也可以是多个包组成的PacketList
-# a为通过rdpcap导入的PacketList
->>> a.summary()
-Ether / IP / TCP 10.231.3.236:49214 > 10.182.79.25:5044 S
-Ether / IP / TCP 10.231.3.236:49214 > 10.182.79.25:5044 A
-Ether / IP / TCP 10.231.3.236:49214 > 10.182.79.25:5044 PA / Raw
-Ether / IP / TCP 10.231.3.236:49214 > 10.182.79.25:5044 A
-Ether / IP / TCP 10.231.3.236:49214 > 10.182.79.25:5044 PA / Raw
-Ether / IP / TCP 10.231.3.236:49214 > 10.182.79.25:5044 A
-# a[0]表示通过rdpcap导入的PacketList中的第一个值
->>> a[0].summary()
-'Ether / IP / TCP 10.231.3.236:49214 > 10.182.79.25:5044 S'
-
-# pkt.show()展示包的开发视图
->>> a[0].show()
-###[ Ethernet ]###
-  dst       = 00:1c:54:52:28:89
-  src       = 00:50:56:bc:04:1b
-  type      = IPv4
-###[ IP ]###
-     version   = 4
-     ihl       = 5
-     tos       = 0x0
-     len       = 52
-     id        = 59978
-     flags     = DF
-     frag      = 0
-     ttl       = 128
-     proto     = tcp
-     chksum    = 0x0
-     src       = 10.231.3.236
-     dst       = 10.182.79.25
-     \options   \
-###[ TCP ]###
-        sport     = 49214
-        dport     = 5044
-        seq       = 2035854826
-        ack       = 0
-        dataofs   = 8
-        reserved  = 0
-        flags     = S
-        window    = 64240
-        chksum    = 0x68c8
-        urgptr    = 0
-        options   = [('MSS', 1460), ('NOP', None), ('WScale', 8), ('NOP', None), ('NOP', None), ('SAckOK', b'')]
-
-# pkt.command() 以字符串的形式返回可生成数据包的scapy命令
-# eval() 用来执行一个字符串表达式，并返回表达式的值。
->>> tmp = a[0].command()
-"Ether(dst='00:1c:54:52:28:89', src='00:50:56:bc:04:1b', type=2048)/IP(version=4, ihl=5, tos=0, len=52, id=59978, flags=2, frag=0, ttl=128, proto=6, chksum=0, src='10.231.3.236', dst='10.182.79.25')/TCP(sport=49214, dport=5044, seq=2035854826, ack=0, dataofs=8, reserved=0, flags=2, window=64240, chksum=26824, urgptr=0, options=[('MSS', 1460), ('NOP', None), ('WScale', 8), ('NOP', None), ('NOP', None), ('SAckOK', b'')])"
->>> my_pkt = eval(tmp)
->>> my_pkt == a[0]
-True
-```
-
-### 构造报文
-
-#### 前置知识
-
-```python
 # 可以通过ls查看某个协议有哪些字段，字段的默认值是什么
 >>> ls(IP)
 version    : BitField  (4 bits)                  = ('4')
@@ -224,7 +262,64 @@ chksum     : XShortField                         = ('None')
 src        : SourceIPField                       = ('None')
 dst        : DestIPField                         = ('None')
 options    : PacketListField                     = ('[]')
+```
 
+`lsc()` 用于列出当前`Scapy`会话中可用的所有协议。它列出了每个协议的名称和简短的描述，以及可以使用哪些参数和属性。
+
+```less
+>>> lsc()
+IPID_count          : Identify IP id values classes in a list of packets
+arpcachepoison      : Poison target's cache with (your MAC,victim's IP) couple
+arping              : Send ARP who-has requests to determine which hosts are up
+arpleak             : Exploit ARP leak flaws, like NetBSD-SA2017-002.
+bind_layers         : Bind 2 layers on some specific fields' values.
+bridge_and_sniff    : Forward traffic between interfaces if1 and if2, sniff and return
+chexdump            : Build a per byte hexadecimal representation
+
+send                :
+sendp               :
+sendpfast           : Send packets at layer 2 using tcpreplay for performance
+sniff               :
+split_layers        : Split 2 layers previously bound.
+sr                  :
+sr1                 :
+sr1flood            : Flood and receive packets at layer 3 and return only the first answer
+srbt                : send and receive using a bluetooth socket
+srbt1               : send and receive 1 packet using a bluetooth socket
+srflood             : Flood and receive packets at layer 3
+srloop              :
+srp                 :
+srp1                :
+srp1flood           : Flood and receive packets at layer 2 and return only the first answer
+srpflood            : Flood and receive packets at layer 2
+srploop             :
+tcpdump             : Run tcpdump or tshark on a list of packets.
+tdecode             :
+traceroute          : Instant TCP traceroute
+traceroute6         : Instant TCP traceroute using IPv6
+traceroute_map      : Util function to call traceroute on multiple targets, then
+tshark              : Sniff packets and print them calling pkt.summary().
+wireshark           :
+wrpcap              : Write a list of packets to a pcap file
+```
+
+`pkt.command()` 以字符串的形式返回可生成数据包的`scapy`命令
+
+`eval()` 用来执行一个字符串表达式，并返回表达式的值。可以搭配`pkt.command()`使用
+
+```python
+>>> tmp = pkts[0].command()
+"Ether(dst='b0:35:9f:26:d6:6c', src='14:51:7e:58:67:c9', type=2048)/IP(version=4, ihl=5, tos=0, len=224, id=42053, flags=0, frag=0, ttl=122, proto=6, chksum=46428, src='222.92.61.107', dst='192.168.10.6')/TCP(sport=4499, dport=53213, seq=2506396920, ack=1338204138, dataofs=5, reserved=0, flags=24, window=65340, chksum=57593, urgptr=0)/Raw(load=b'|r\x00\xb4U\x00\x00,\x00\x00\xfeH\x88\xdf\xb8\xf6')"
+>>> my_pkt = eval(tmp)
+>>> my_pkt == pkts[0]
+True
+```
+
+
+
+
+
+```python
 # 构造一个源IP为10.182.79.36 目的IP为10.182.79.35的IP报文
 >>> my_ip = IP(src='10.182.79.36',dst='10.182.79.35')
 <IP src=10.182.79.36 dst=10.182.79.35 |>
@@ -312,6 +407,10 @@ options    : PacketListField                     = ('[]')
  <IP  frag=0 ttl=10 proto=tcp |<TCP  dport=https |>>]
 ```
 
+
+
+### 构造报文
+
 #### 构造ICMP报文
 
 先通过`Scapy`抓一个真实的报文或者通过`rdpcap`导入一个真实的报文，然后通过`pkt.show()`展示报文的结构，按照报文结构一步一步的构造出数据包
@@ -387,7 +486,7 @@ my_pkt.show()
            load      = 'abcdefghijklmnopqrstuvwabcdefghi'
 ```
 
-### 发送报文
+## 发送数据包
 
 ```python
 # 只负责发送数据包，不接受报文
@@ -449,6 +548,12 @@ Received 269 packets, got 3 answers, remaining 1 packets  # 收到3个回应，�
 >>> ans.summary()    # 但是只保存一个有回应的包
 'IP / ICMP 10.182.79.36 > 10.231.3.236 echo-reply 0 / Raw'
 ```
+
+## 实用脚本
+
+
+
+
 
 ## 类型转换
 
