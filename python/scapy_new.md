@@ -264,45 +264,6 @@ dst        : DestIPField                         = ('None')
 options    : PacketListField                     = ('[]')
 ```
 
-`lsc()` 用于列出当前`Scapy`会话中可用的所有协议。它列出了每个协议的名称和简短的描述，以及可以使用哪些参数和属性。
-
-```less
->>> lsc()
-IPID_count          : Identify IP id values classes in a list of packets
-arpcachepoison      : Poison target's cache with (your MAC,victim's IP) couple
-arping              : Send ARP who-has requests to determine which hosts are up
-arpleak             : Exploit ARP leak flaws, like NetBSD-SA2017-002.
-bind_layers         : Bind 2 layers on some specific fields' values.
-bridge_and_sniff    : Forward traffic between interfaces if1 and if2, sniff and return
-chexdump            : Build a per byte hexadecimal representation
-
-send                :
-sendp               :
-sendpfast           : Send packets at layer 2 using tcpreplay for performance
-sniff               :
-split_layers        : Split 2 layers previously bound.
-sr                  :
-sr1                 :
-sr1flood            : Flood and receive packets at layer 3 and return only the first answer
-srbt                : send and receive using a bluetooth socket
-srbt1               : send and receive 1 packet using a bluetooth socket
-srflood             : Flood and receive packets at layer 3
-srloop              :
-srp                 :
-srp1                :
-srp1flood           : Flood and receive packets at layer 2 and return only the first answer
-srpflood            : Flood and receive packets at layer 2
-srploop             :
-tcpdump             : Run tcpdump or tshark on a list of packets.
-tdecode             :
-traceroute          : Instant TCP traceroute
-traceroute6         : Instant TCP traceroute using IPv6
-traceroute_map      : Util function to call traceroute on multiple targets, then
-tshark              : Sniff packets and print them calling pkt.summary().
-wireshark           :
-wrpcap              : Write a list of packets to a pcap file
-```
-
 `pkt.command()` 以字符串的形式返回可生成数据包的`scapy`命令
 
 `eval()` 用来执行一个字符串表达式，并返回表达式的值。可以搭配`pkt.command()`使用
