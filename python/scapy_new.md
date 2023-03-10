@@ -276,39 +276,38 @@ options    : PacketListField                     = ('[]')
 True
 ```
 
-
-
-
+`Scapy`中，构造数据包时使用的是分层结构，每一层协议对应一个类，例如：`IP()`表示`IP`层协议，`TCP()`表示`TCP`层协议等
 
 ```python
 # 构造一个源IP为10.182.79.36 目的IP为10.182.79.35的IP报文
+# 方式1
 >>> my_ip = IP(src='10.182.79.36',dst='10.182.79.35')
-<IP src=10.182.79.36 dst=10.182.79.35 |>
 
-# 获取报文的字段值，如果报文的默认值没有被修改，Scapy会尝试为所有数据包字段使用合理的默认值
->>> my_ip.version
-4
+# 方式2
+>>> my_ip = IP()
+>>> my_ip.src = '10.182.79.36'
+>>> my_ip.dst = '10.182.79.35'
 
-# 设置/修改报文的字段值
->>> my_ip.src = '10.182.79.38'
->>> my_ip.src
-'10.182.79.38'
+# 构造一个源端口为90 目的端口为8080的TCP层报文
+>>> my_tcp = TCP(sport=80, dport=8080)
+```
 
-# 构建多层报文,这个 / 运算符用作两层之间的合成运算符,下层可以根据上层重载一个或多个默认字段
->>> my_tcp = TCP(dport=80,sport=9996)
+"/"是协议层之间的分隔符，这个 / 运算符用作两层之间的合成运算符，下层可以根据上层重新设置部分合理的字段
+
+```python
+>>> my_ip = IP(src='10.182.79.36',dst='10.182.79.35')
+# 只有单个IP层时，proto字段为0
 >>> my_ip.proto
 0
->>> my_pkt = my_ip / my_tcp
-# 网络协议号中6表示tcp，可以通过[]取报文中某一层的数据
->>> my_pkt[IP].proto
-6
+>>> my_pkt = my_ip / TCP(dport=80,sport=9996)
+# 当IP层和TCP层叠加时，网络协议号被设置为6表示上层协议为tcp
 >>> my_pkt.proto
 6
+```
 
-# 一个数据包中可能有多层报文，不同层的报文中可能有相同的属性值
-# 例如：链路层的Ether中有属性为src，网络层的IP中也有src
-# 如果直接通过pkt.src的形式来取值，会取到下层中的src，也就是Ether报文的src
-# 可以通过pkt[IP].src的形式来取IP报文中的src
+一个数据包中可能有多层报文，不同层的报文中可能有相同的属性值。例如：链路层的Ether中有属性为`src`，网络层的`IP`中也有`src`，如果直接通过`pkt.src`的形式来取值，会取到下层中的`src`，也就是`Ether`报文的`src`，可以通过`pkt[IP].src`的形式来取`IP`报文中的`src`
+
+```python
 >>> ls(Ether)
 dst        : DestMACField                        = ('None')
 src        : SourceMACField                      = ('None')
@@ -332,7 +331,11 @@ options    : PacketListField                     = ('[]')
 '11:11:11:11:11:11'
 >>> xxx[IP].src
 '1.1.1.1'
+```
 
+构造一组数据包
+
+```python
 # 生成一组数据包
 # a = [i for i in Iterable]为列表推导式，其结果等于下面的循环
 # a = []
@@ -346,15 +349,17 @@ options    : PacketListField                     = ('[]')
  <IP  src=10.182.79.37 |>,
  <IP  src=10.182.79.38 |>,
  <IP  src=10.182.79.39 |>]
->>> z = IP(ttl=[1,2,(8,10)])
+# 生成三个IP层报文 ttl分别为1, 2, 3
+>>> z = IP(ttl=[1,2,3])
 >>> [i for i in z]
 [<IP  ttl=1 |>,
  <IP  ttl=2 |>,
- <IP  ttl=8 |>,
- <IP  ttl=9 |>,
- <IP  ttl=10 |>]
->>> c = TCP(dport=[80,443])
+ <IP  ttl=3 |>]
+# 生成目的端口号为1-65535，源端口随机的TCP报文
+>>> z = TCP(sport=RandShort(), dport=(1,65535))
+
 # 所有字段之间使用笛卡尔积生成
+>>> c = TCP(dport=[80,443])
 >>> [i for i in z/c]
 [<IP  frag=0 ttl=1 proto=tcp |<TCP  dport=http |>>,
  <IP  frag=0 ttl=1 proto=tcp |<TCP  dport=https |>>,
@@ -366,7 +371,10 @@ options    : PacketListField                     = ('[]')
  <IP  frag=0 ttl=9 proto=tcp |<TCP  dport=https |>>,
  <IP  frag=0 ttl=10 proto=tcp |<TCP  dport=http |>>,
  <IP  frag=0 ttl=10 proto=tcp |<TCP  dport=https |>>]
+# 
 ```
+
+
 
 
 
