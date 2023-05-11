@@ -22,7 +22,7 @@ Welcome to Scapy (2.5.0rc2) using IPython 8.5.0
 
 ## 使用Scapy抓包
 
-`sniff` 是`scapy`中的一个函数，用于在网络上捕获数据包并对其进行分析,可以通过 `sniff` 函数来指定要捕获的数据包的数量、协议、过滤条件等。以下是`sniff()`函数的详细用法：
+`sniff`是`scapy`中的一个函数，用于在网络上捕获数据包并对其进行分析,可以通过 `sniff` 函数来指定要捕获的数据包的数量、协议、过滤条件等。以下是`sniff()`函数的详细用法：
 
 ```python
 sniff(filter=None,iface=None,count=0,prn=None,offline=None,stop_filter=None,timeout=None,)
