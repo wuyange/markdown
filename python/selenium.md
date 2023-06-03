@@ -50,7 +50,7 @@ element = driver.find_element_by_id('kw')  #通过id
 #一个元素可以有多个class元素，多个class之间用空格隔开如：<span class="chinese student">张三</span>
 #使用by_class_name定位元素时，如果class有多个值，只需要输入一个值就可以，不能输入多个值
 element = driver.find_element_by_class_name('animal')  #通过class属性，会返回匹配到的第一个元素
-element = driver.find_elements_by_tag_name('div'))   #选择所有的tag名为 div的元素
+element = driver.find_elements_by_tag_name('div')   #选择所有的tag名为 div的元素
 element = driver.find_elements_by_name('passwd')  #选择所有的name为passwd的元素
 #通过元素的文本链接定位
 如:<a href="http://news.baidu.com" target="_blank" class="mnav c-font-normal c-color-t">新闻</a>
@@ -68,6 +68,7 @@ driver.find_elements_by_xpath("//input[@id='kw']")  #匹配所有的id为kw的in
 driver.find_elements_by_xpath("//*[@id='kw']")      #匹配所有的id为kw的标签
 #使用逻辑运算符
 driver.find_element_by_xpath("//input[@id='kw' and @class='s_ipt']")   #匹配id为kw且class为s_ipt的input标签
+driver.find_element_by_xpath("//input[@id='kw' and not(@class)]")   #匹配id为kw且没有class属性的input标签
 #使用模糊属性值定位
 #contains，用于匹配一个属性中包含的字符串
 driver.find_element_by_xpath("//span[contains(@class,'ip')]")   #定位百度的搜索框
@@ -125,6 +126,8 @@ driver.find_elements_by_css_selector("span:nth-last-child(2)")
 driver.find_elements_by_css_selector("span:last-child")
 #获取匹配到的第n个元素
 driver.find_elements_by_css_selector("span:nth-child(n)")
+#获取匹配到的第一个元素
+driver.find_elements_by_css_selector("span:first-child")
 
 #模拟鼠标操作
 from selenium.webdriver import ActionChains
