@@ -106,4 +106,60 @@ class QuickstartUser(HttpUser):
 class QuickstartUser(HttpUser):
 ```
 
-在这里，我们定义了一个用于模拟的用户类。它继承自HttpUser类，为每个用户提供了一个client属性，该属性是HttpSession的一个实例，可用于向目标系统发起负载测试的HTTP请求。当测试开始时，Locust将为每个模拟的用户创建此类的一个实例，并且每个用户将在自己的绿色gevent线程中开始运行。
+在这里，我们定义了一个用于模拟的用户类。它继承自`HttpUser`类，为每个用户提供了一个`client`属性，该属性是`HttpSession`的一个实例，可用于向目标系统发起负载测试的HTTP请求。当测试开始时，`Locust`将为每个模拟的用户创建此类的一个实例，并且每个用户将在自己的绿色`gevent`线程中开始运行。
+
+>在Python中，线程通常是由操作系统进行调度的，每个线程都需要占用一定的内存和系统资源。与之相比，协程是一种用户态的轻量级线程，它由程序员在代码中显式地进行控制，而不需要操作系统进行调度。
+>
+>2gevent是一个基于libev或libuv的Python网络库，它实现了绿色线程的概念。通过使用gevent，您可以在单个线程中运行多个绿色gevent线程，这些线程可以在遇到网络IO或其他阻塞操作时自动切换，从而充分利用CPU资源，并提高并发性能。
+
+```python
+wait_time = between(1, 5)
+```
+
+`QuickstartUser`类定义了一个`wait_time`属性，这将使模拟的用户在执行完每个任务后等待1到5秒钟的时间间隔。
+
+```python
+@task
+def hello_world(self):
+    ...
+```
+
+用`@task`装饰的方法是`Locustfile`的核心内容。对于每个正在运行的用户，Locust会创建一个绿色线程（微线程），并调用这些方法。
+
+```python
+@task
+def hello_world(self):
+    self.client.get("/hello")
+    self.client.get("/world")
+
+@task(3)
+def view_items(self):
+...
+```
+
+通过在两个方法上使用`@task`装饰器定义了两个任务，其中一个方法的权重设置为3。当`QuickstartUser`运行时，它会选择声明的两个任务中的一个执行，其中`hello_world`和`view_items`两个任务都有可能被执行。任务是随机选择的，但可以给它们不同的权重。上面的配置将使`Locust`选择`view_items`的几率比选择`hello_world`高三倍。当任务执行完成后，用户将在其等待时间（在这种情况下为1到5秒）内休眠。在等待时间之后，用户将选择新任务并重复执行。 
+
+>只有用`@task`装饰的方法才会被选中，因此可以按照自己的喜好定义自己的内部辅助方法。
+
+```
+self.client.get("/hello")
+```
+
+`self.client`属性使得在`Locust`中可以进行`HTTP`调用，并且这些调用会被`Locust`记录。
+
+```python
+@task(3)
+def view_items(self):
+    for item_id in range(10):
+        self.client.get(f"/item?id={item_id}", name="/item")
+        time.sleep(1)
+```
+
+在`view_items`任务中，我们通过使用一个可变的查询参数加载10个不同的URL。为了不在`Locust`的统计数据中得到10个单独的条目（因为统计数据是按`URL`分组的），我们使用了`name`参数，将所有这些请求都分组在名为`"/item"`的条目下。
+
+```python
+def on_start(self):
+    self.client.post("/login", json={"username":"foo", "password":"bar"})
+```
+
+每个模拟用户在开始运行时，都会调用这个名为`on_start`的方法。在`Locust`中，`on_start`方法允许我们在每个模拟用户开始运行之前进行一些初始化操作，例如登录、准备测试数据等。
