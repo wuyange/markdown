@@ -5,7 +5,7 @@
 ### 简介
 
 
-Locust 是一个 Python 编写的开源的负载测试工具，可以模拟大量用户同时访问一个 web 应用，从而测试其性能和稳定性。Locust 采用分布式架构，支持使用多台计算机模拟高并发访问，可以实现千万级别的并发模拟。
+Locust 是一个 Python 编写的开源的负载测试工具，可以模拟大量用户同时访问一个 web 应用，从而测试其性能和稳定性。
 
 **Locust 有以下特点：**
 
@@ -411,3 +411,85 @@ for i in range(10):
 ```
 
 ## TaskSet class
+
+`TaskSet` 是一种组织用户行为的方式。它允许将一组相关的任务（或行为）组织在一起，以便更好地管理和模拟用户的行为流。
+
+```python
+from locust import User, TaskSet, constant
+
+class ForumSection(TaskSet):
+    wait_time = constant(1)
+
+    @task(10)
+    def view_thread(self):
+        pass
+
+    @task
+    def create_thread(self):
+        pass
+
+    @task
+    def stop(self):
+        self.interrupt()
+
+class LoggedInUser(User):
+    wait_time = constant(5)
+    tasks = {ForumSection:2}
+
+    @task
+    def my_task(self):
+        pass
+```
+
+`Taskset`和`User`类中都定义了`wait_time`时，以`Taskset`为准
+
+任务集永远不会停止执行任务，并将执行移交给父用户/任务集。这必须由开发人员通过调用 `TaskSet.interrupt()`方法来完成
+
+通过使用`TaskSet`，可以更有效地组织和管理用户的行为，使代码更加结构化和可扩展。
+
+可以使用装饰器以`@tag`与普通任务类似的方式标记任务集，但有一些细微差别。标记任务集将自动将标记应用于任务集的所有任务。此外，如果在嵌套的任务集中标记任务，即使任务集未被标记，`Locust`也会执行该任务。
+
+`TaskSet`类的任务可以是其他`TaskSet`类，允许它们嵌套任意数量的级别。能够定义一种以更真实的方式模拟用户的行为。
+
+例如，我们可以使用以下结构定义任务集：
+
+```
+- Main user behaviour
+  - Index page
+  - Forum page
+    - Read thread
+      - Reply
+    - New thread
+    - View next page
+  - Browse categories
+    - Watch movie
+    - Filter movies
+  - About page
+```
+
+### SequentialTaskSet
+
+`SequentialTaskSet`是一个任务集，其任务将按声明顺序执行。
+
+```python
+def function_task(taskset):
+    taskset.client.get("/3")
+
+class SequenceOfTasks(SequentialTaskSet):
+    @task
+    def first_task(self):
+        self.client.get("/1")
+        self.client.get("/2")
+
+    # you can still use the tasks attribute to specify a list of tasks
+    tasks = [function_task]
+
+    @task
+    def last_task(self):
+        self.client.get("/4")
+```
+
+以上代码将按顺序执行/1 /2 /3 /4
+
+## 实战演练
+
