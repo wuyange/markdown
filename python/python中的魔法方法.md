@@ -157,13 +157,17 @@ class Solution:
 
 with上下文管理器 `__enter__` `__exit__`
 
-数值转换:  `__abs__` `__bool__` `__int__` `__float__` `__hash__` `__index__
+数值转换:  `__abs__` `__bool__` `__int__` `__float__` `__hash__` `__index__`
 
 属性相关:  `__getattr__` `__setattr__` `__getattribute__` `__setattribute__` `__dir__`
 
 属性描述符:  `__get__` `__set__` `__delete__`
 
+https://learnku.com/articles/52783
+
 协程:  `__await__` `__aiter__` `__anext__` `__aenter__` `__aexit__`
+
+
 
 **「数学运算」**
 
