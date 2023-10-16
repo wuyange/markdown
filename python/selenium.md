@@ -120,14 +120,24 @@ driver.find_elements_by_css_selector("form#form >span >input.s_ipt")  #定位所
 driver.find_element_by_css_selector("[id *= 'k']")        #定位所有id中包含k的元素
 driver.find_element_by_css_selector("[id ^= 'k']")        #定位所有id中以k开头的元素
 driver.find_element_by_css_selector("[id $= 'w']")        #定位所有id中以w结尾的元素
-#获取匹配到的倒数第二个元素
-driver.find_elements_by_css_selector("span:nth-last-child(2)")
-#获取匹配到的倒数第1个元素
-driver.find_elements_by_css_selector("span:last-child")
-#获取匹配到的第n个元素
-driver.find_elements_by_css_selector("span:nth-child(n)")
-#获取匹配到的第一个元素
-driver.find_elements_by_css_selector("span:first-child")
+
+#需要满足两个条件 1.在所有兄弟元素中排名倒数第2 2. 标签名为span
+driver.find_element_by_css_selector("span:nth-last-child(2)")
+#需要满足两个条件 1.在所有兄弟元素中排名最后 2. 标签名为span
+driver.find_element_by_css_selector("span:last-child")
+#需要满足两个条件 1.在所有兄弟元素中排名第n 2. 标签名为span
+driver.find_element_by_css_selector("span:nth-child(n)")
+#需要满足两个条件 1.在所有兄弟元素中排名第一 2. 标签名为span
+driver.find_element_by_css_selector("span:first-child")
+
+#在所有标签名称为span的兄弟元素中排名第2
+driver.find_element_by_css_selector("span:nth-last-of-type(2)")
+#在所有标签名称为span的兄弟元素中排名最后
+driver.find_element_by_css_selector("span:last-of-type")
+#在所有标签名称为span的兄弟元素中排名第n
+driver.find_element_by_css_selector("span:nth-of-type(n)")
+#在所有标签名称为span的兄弟元素中排名第1
+driver.find_element_by_css_selector("span:first-of-type")
 
 #模拟鼠标操作
 from selenium.webdriver import ActionChains

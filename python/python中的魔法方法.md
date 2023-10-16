@@ -165,6 +165,8 @@ with上下文管理器 `__enter__` `__exit__`
 
 https://learnku.com/articles/52783
 
+https://docs.python.org/zh-cn/3/howto/descriptor.html#primer
+
 协程:  `__await__` `__aiter__` `__anext__` `__aenter__` `__aexit__`
 
 
