@@ -2,6 +2,8 @@
 
 ## postman的简介和安装
 
+[学习教程中文文档](https://postman.xiniushu.com/docs/sending-requests/requests#-%E5%8F%91%E9%80%81%E5%8F%82%E6%95%B0)
+
 Postman 是一个流行的 API 测试和开发工具，可用于设计、测试和调试 RESTful API。它提供了一个易于使用的界面，可让用户轻松创建和发送 HTTP 请求，以及查看和分析响应。
 
 **安装：**
