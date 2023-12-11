@@ -8,18 +8,6 @@ https://try.redis.io/
 
 https://www.redis.net.cn/tutorial/3502.html
 
-Redis 是一个开源(BSD许可)的使用ANSI C语言编写的数据库,它支持存储键对值(key-value)的形式的数据。
-
-Redis 被称为数据结构服务器,因为值(value)可以是 字符串(string), 哈希(hash), 列表(list), 集合(sets) 和 有序集合(sorted sets)等类型。
-
-主要特点:
-
-- 内存存储 - Redis所有数据都是存放在内存中的,所以读写性能非常快。
-- 持久化 - Redis会周期性地把更新后的数据写入磁盘或者把修改操作写到追加的日志文件,来保证重新启动的时候数据的安全性。
-- 集群支持 - Redis支持集群模式,解决单点故障问题。
-- 多种数据类型 - Redis不只限于简单的键值对,还提供类似list,set,zset,hash等数据结构的存储。
-- 发布订阅 - Redis支持发布订阅模式,可以实现一对多通讯功能。
-
 ### redis能做什么
 
 Redis可以用于以下一些场景:
