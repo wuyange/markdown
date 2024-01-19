@@ -1194,22 +1194,49 @@ SINTER key [key ...]
 
 **抽奖**
 
-- 参与抽奖
-- 获取已经参加抽奖任务
-- 开始抽奖
+```shell
+# 参与抽奖
+sadd lottery:<lottery_id> <user_id>
+
+# 获取已经参加抽奖人数
+scard lottery:<lottery_id>
+
+# 判断是否参与抽奖
+sismember lottery:<lottery_id> <user_id>
+
+# 开始抽奖
+srandmember lottery:<lottery_id> [count]
+spop lottery:<lottery_id> [count]
+```
 
 **微信朋友圈点赞**
 
-- 点赞
-- 取消点赞
-- 展示所有点赞用户
-- 查看他人朋友圈的点赞
-- 判断是否对他人朋友圈点赞
+```shell
+# 点赞
+sadd post:<post_id>:likes <user_id>
+
+# 取消点赞
+srem post:<post_id>:likes <user_id>
+
+# 判断是否对他人朋友圈点赞
+sismember post:<post_id>:likes <user_id>
+
+# 展示所有点赞用户
+smembers post:<post_id>:likes
+
+# 查看他人朋友圈的点赞
+sinter post:<post_id>:likes friends:<my_user_id>
+```
 
 **可能认识的人**
 
-- 查看共同好友
-- 可能认识的人
+```shell
+# 查看共同好友
+sinter friends:<user1_id> friends:<user2_id>
+
+# 可能认识的人
+sdiff friends:<user1_id> friends:<user2_id>
+```
 
 ### Redis有序集合(zset)
 
