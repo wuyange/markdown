@@ -56,7 +56,7 @@ for path,dirs,files in os.walk(os.getcwd()):
     print(dirs)
     print(files)
     for file in files:
-        os.remove(path+os.sep+file)    	 
+        print(path+os.sep+file)    	 
     
 D:\python_work\iSource_2.5
 ['.idea', '222', '555', 'logmanage', 'systemsetup', 'xx', 'xxx1']
