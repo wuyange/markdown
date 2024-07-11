@@ -123,7 +123,7 @@ def quick_sort(arr):
 def quick_sort(arr, left, right):
     # 递归终止条件
     if left >= right:
-    return
+    	return
     # 设置基准位
     pivot = arr[left]
     # 左右指针  
@@ -131,11 +131,11 @@ def quick_sort(arr, left, right):
     j = right
     while i < j:
     # 右指针从右向左移动  
-    while i < j and arr[j] >= pivot:
-        j -= 1
-    # 左指针从左向右移动       
-    while i < j and arr[i] <= pivot: 
-        i += 1
+        while i < j and arr[j] >= pivot:
+            j -= 1
+        # 左指针从左向右移动       
+        while i < j and arr[i] <= pivot: 
+            i += 1
     # 交换两个指针位置的元素      
     if i < j:
         arr[i], arr[j] = arr[j], arr[i]
