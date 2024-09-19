@@ -48,6 +48,9 @@ Redis可以用于以下一些场景:
 https://developer.aliyun.com/article/925491
 
 ```shell
+# 快速版本
+docker run --name my-redis -p 6379:6379 -d -e REDIS_PASSWORD=123456 redis
+
 # 下载docker镜像
 docker pull redis:7.0
 
