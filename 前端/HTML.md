@@ -477,3 +477,47 @@ para.onclick = function() {
 
 ## 表单
 
+### form元素
+
+所有表单都以一个`form`元素开始
+
+```html
+<form action="/my-handling-form-page" method="post"></form>
+```
+
+- `action` 属性定义了在提交表单时，应该把所收集的数据送给谁（URL）去处理。
+- `method` 属性定义了发送数据的 HTTP 方法（通常是 `get` 或 `post`）。
+
+### input元素
+
+`<input>` 标签定义输入字段，用户可以在其中输入数据。
+
+`<input>` 元素是最重要的表单元素。
+
+`<input>` 元素可以以多种方式显示，具体取决于 type 属性
+
+```html
+以下是不同的输入类型：
+- <input type="text">（默认值）
+- <input type="button">
+- <input type="password">
+- <input type="radio">
+- <input type="checkbox">
+- <input type="file">
+- <input type="reset">
+- <input type="submit">
+- <input type="color">
+- <input type="date">
+- <input type="datetime-local">
+- <input type="email">
+- <input type="hidden">
+- <input type="image">
+- <input type="month">
+- <input type="number">
+- <input type="range">
+- <input type="search">
+- <input type="tel">
+- <input type="time">
+- <input type="url">
+- <input type="week">
+```
