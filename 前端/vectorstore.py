@@ -13,11 +13,7 @@ class CodeBaseStore:
     def store(self, documents:List[Document]):
         self.db = self._store.from_documents(documents)
         
-    def embed():
-        pass
-    
-    def store():
-        pass
+
     
     def search():
         pass

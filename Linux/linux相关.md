@@ -21,6 +21,14 @@ network 10.182.80.0
 broadcast 10.182.80.255
 gw 10.182.80.1
 
+# 直接写IP和域名的映射
+/etc/hosts
+111.111.111.111 domain
+
+# 添加dns
+/etc/resolv.conf
+nameserver 183.60.82.98
+
 centos
 /etc/sysconfig/static-routes
 
@@ -733,19 +741,7 @@ killall name  杀死名称为name的进程
 
 ![](images/WEBRESOURCEd9ed85232f8c28f4771dca6634ef364a截图.png)
 
-### 查看环境变量
 
-[linux查看、添加、删除环境变量_linux删除环境变量-CSDN博客](https://blog.csdn.net/mayue_web/article/details/97023615)
-
-```shell
-printenv 显示环境变量
-set 显示shell变量和环境变量
-
-[root@centos7 ~]# printenv USER
-root
-[root@centos7 ~]# echo $USER
-root
-```
 
 ### 软件包安装/卸载命令
 
@@ -923,4 +919,89 @@ set showmatch   #设置匹配模式，当输入一个左括号时会匹配相应
 ```
 
 ## shell脚本
+
+### 环境变量
+
+[linux查看、添加、删除环境变量_linux删除环境变量-CSDN博客](https://blog.csdn.net/mayue_web/article/details/97023615)
+
+#### 查看环境变量
+
+```shell
+printenv 显示所有的全局环境变量
+set 显示全局环境变量和局部变量
+env 设置或者修改环境变量
+
+[root@centos7 ~]# printenv USER
+root
+[root@centos7 ~]# echo $USER
+root
+```
+
+#### 设置环境变量
+
+##### 设置局部环境变量
+
+进入另一个shell会话就不生效了
+
+```shell
+[root@VM-16-17-opencloudos ~]# echo $a
+
+[root@VM-16-17-opencloudos ~]#
+[root@VM-16-17-opencloudos ~]# a='shunyu'
+[root@VM-16-17-opencloudos ~]# echo $a
+shunyu
+[root@VM-16-17-opencloudos ~]# bash
+[root@VM-16-17-opencloudos ~]# echo $a
+
+```
+
+##### 添加系统级的全局环境变量
+
+需root权限、针对所有用户、永久生效
+
+```shell
+vim /etc/profile
+export PATH="/opt/STM/STLinux-2.3/devkit/sh4/bin:$PATH"
+source /etc/profile
+```
+
+##### 添加用户级全局环境变量
+
+对单一用户生效永久的
+
+> 在用户的家目录（~）下，当使用 Bash shell 时，系统会自动加载以下文件（如果存在）：
+> .bash_profile：这是在登录时加载的主要文件。通常用于设置用户的个人环境变量和启动脚本。
+> .bash_login：如果 .bash_profile 不存在，则会尝试加载此文件。
+> .profile：如果 .bash_profile 和 .bash_login 都不存在，则会尝试加载此文件。这是一个通用的配置文件，适用于多种类型的 shell。
+> .bashrc：这是在每次打开新的终端窗口时加载的文件。它包含了用户定义的别名、函数、自定义环境变量等。
+> 通常情况下，用户可以在.bash_profile、.bash_login 或 .profile
+> 文件中设置一些全局的环境变量和启动脚本，而在.bashrc 文件中设置一些特定于 Bash 的配置和个人设置。
+> 请注意，这是默认的行为，具体的加载顺序可能会受到系统配置的影响。
+> **修改文件后要想马上生效还要运行source ~/.bash_profile不然只能在下次重进此用户时生效。**
+
+##### 终端临时添加全局环境变量
+
+早所有shell会话生效，当ssh窗口关闭后失效
+
+子shell无法改变父shell的值
+
+```shell
+[root@VM-16-17-opencloudos ~]# echo $c
+
+[root@VM-16-17-opencloudos ~]# export c='shunyu'
+[root@VM-16-17-opencloudos ~]# echo $c
+shunyu
+[root@VM-16-17-opencloudos ~]# bash
+[root@VM-16-17-opencloudos ~]# echo $c
+shunyu
+[root@VM-16-17-opencloudos ~]# export c='shunyu1'
+[root@VM-16-17-opencloudos ~]# echo $c
+shunyu1
+[root@VM-16-17-opencloudos ~]# exit
+exit
+[root@VM-16-17-opencloudos ~]# echo $c
+shunyu
+```
+
+#### 删除环境变量
 
