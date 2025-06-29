@@ -171,7 +171,38 @@ urlpatterns = [
 
 ```python
 # mysite/settings.py
-TIME_ZONE = "Asia/Shanghai"
+# settings.py
+import os
+from pathlib import Path
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+# 使用环境变量更安全
+SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY')
+DEBUG = False
+
+ALLOWED_HOSTS = ['yourdomain.com']
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': os.environ.get('DB_NAME', 'mydb'),
+        'USER': os.environ.get('DB_USER', 'myuser'),
+        'PASSWORD': os.environ.get('DB_PASSWORD', ''),
+        'HOST': os.environ.get('DB_HOST', 'db.server.com'),
+        'PORT': os.environ.get('DB_PORT', '3306'),
+        'OPTIONS': {
+            'ssl': {'ca': os.environ.get('MYSQL_CA_PATH')},
+            'charset': 'utf8mb4',
+            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+        },
+        'CONN_MAX_AGE': 300,
+    }
+}
+
+# 时区设置
+TIME_ZONE = 'Asia/Shanghai'
+USE_TZ = True
 ```
 
 此外，关注一下文件头部的 [`INSTALLED_APPS`](https://docs.djangoproject.com/zh-hans/4.1/ref/settings/#std-setting-INSTALLED_APPS) 设置项。这里包括了会在你项目中启用的所有 Django 应用。应用能在多个项目中使用，你也可以打包并且发布应用，让别人使用它们。
