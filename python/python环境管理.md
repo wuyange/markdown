@@ -225,14 +225,58 @@ uv sync --upgrade
 
 ---
 
-### **总结**
-通过 `uv` 工具，你可以实现：
-- ✅ **多版本 Python 快速切换**  
-- ✅ **依赖包极速安装与同步**  
-- ✅ **虚拟环境自动化管理**  
-- ✅ **跨平台兼容性（Windows/macOS/Linux）**  
+### 使用uv install 安装 python慢
 
-建议将 `uv` 作为 Python 项目的默认工具链，显著提升开发效率和环境一致性！
+通过手动下载 Python 安装包并设置本地镜像目录，可以显著提升安装速度。
+
+#### **步骤 1：手动下载 Python 安装包**
+1. **访问官方发布页面**：
+   - [https://github.com/astral-sh/python-build-standalone/releases](https://github.com/astral-sh/python-build-standalone/releases)
+2. **选择需要的版本**（例如 `20250409`）：
+   - 根据操作系统和架构（如 `x86_64-linux` 或 `x86_64-pc-windows-msvc`）下载对应的 `.tar.gz` 文件。
+   - 示例文件名：
+     ```
+     cpython-3.10.17+20250409-x86_64-unknown-linux-gnu-install_only_stripped.tar.gz
+     cpython-3.11.12+20250409-x86_64-unknown-linux-gnu-install_only_stripped.tar.gz
+     ```
+
+3. **创建本地镜像目录**：
+   ```bash
+   # Linux/macOS
+   mkdir -p ~/uv_python_mirror/20250409
+   # Windows
+   mkdir C:\uv_python_mirror\20250409
+   ```
+
+4. **将下载的 `.tar.gz` 文件移动到镜像目录**：
+   ```bash
+   # Linux/macOS
+   mv cpython-3.10.17+20250409-*.tar.gz ~/uv_python_mirror/20250409/
+   # Windows（使用资源管理器或命令行）
+   move cpython-3.10.17+20250409-*.tar.gz C:\uv_python_mirror\20250409\
+   ```
+
+#### **步骤 2：设置环境变量**
+1. **Linux/macOS**：
+   ```bash
+   export UV_PYTHON_INSTALL_MIRROR=file://~/uv_python_mirror/20250409
+   ```
+2. **Windows**：
+   - 打开终端（PowerShell 或 CMD），执行：
+     ```cmd
+     setx UV_PYTHON_INSTALL_MIRROR "file:///C:/uv_python_mirror/20250409"
+     ```
+   - 或临时设置（仅当前会话生效）：
+     ```cmd
+     set UV_PYTHON_INSTALL_MIRROR=file:///C:/uv_python_mirror/20250409
+     ```
+
+#### **步骤 3：验证镜像配置**
+```bash
+uv python install 3.10
+```
+此时 `uv` 会直接从本地镜像目录读取文件，安装速度显著提升。
+
 
 
 ## 使用内置的venv模块创建虚拟环境
@@ -331,4 +375,14 @@ conda update -n myenv numpy
 
 # 删除package
 conda remove -n myenv numpy
+```
+
+## 设置PIP源
+
+```bash
+tee /etc/pip.conf << 'EOF'
+[global]
+index-url = https://pypi.tuna.tsinghua.edu.cn/simple
+trusted-host = pypi.tuna.tsinghua.edu.cn
+EOF
 ```
