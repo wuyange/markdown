@@ -88,3 +88,25 @@ git clone https://github.com/example/repo.git
 - **代理服务未启动**：确认代理服务器（如 `Shadowsocks`、`V2Ray`）已运行。
 
 ---
+
+你遇到的错误信息：
+```
+fatal: unable to access 'https://github.com/wuyange/markdown.git/': schannel: failed to receive handshake, SSL/TLS connection failed
+```
+可能的原因及解决方法
+1. SSL 证书验证失败
+Git 默认会验证 GitHub 的 SSL 证书。如果系统或 Git 无法验证该证书，就会导致握手失败。
+
+解决方法：
+
+临时禁用 SSL 验证（不推荐用于生产环境）
+仅用于测试，不建议长期使用，因为会降低安全性：
+
+git config --global http.sslVerify false
+⚠️ 注意：此操作会绕过 SSL 证书验证，可能带来安全风险。
+
+更新系统证书
+Windows 系统有时需要更新根证书才能正确验证 GitHub 的 SSL 证书：
+
+certutil -setreg RootStore -f
+或者手动从 Microsoft 官网 下载并安装最新根证书。
